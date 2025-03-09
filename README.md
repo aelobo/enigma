@@ -6,5 +6,12 @@
 
 ## Overview
 
-+ Modernized Enigma machine
-+ More to come ...
++ Modernized Enigma machine using custom PCB and Altera DE10 FPGA
+
++ RTL
+  + PS2 communication between peripheral PS2 keyboard and FGPA
+  + SPI protocol to read from microSD card
+  + Rotorary encoder RTL 
+
+### PS2
++ explain here
