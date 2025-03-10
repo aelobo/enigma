@@ -1,5 +1,20 @@
 `default_nettype none
 
+/**
+ * scan_code.sv
+ *
+ * Enigma Machine
+ *
+ * ECE 18-500
+ * Carnegie Mellon University
+ *
+ * This is the ps2 scan code to seven segment display mapping
+ **/
+
+/*----------------------------------------------------------------------------*
+ *  Scan code to seven-segment display                                        *
+ *----------------------------------------------------------------------------*/
+
 module scanCodetoSevenSegment
     (input  logic       key_rdy,
      input  logic [7:0] scan_code,  
@@ -20,7 +35,7 @@ module scanCodetoSevenSegment
             8'h42: segment = 7'b000_0111;       // K
             8'h4B: segment = 7'b000_1110;       // L
             8'h3A: segment = 7'b101_0100;       // M
-            8'h31: segment = 7'b111_0110;       // N
+            8'h31: segment = 7'b111_0110;       // n
             8'h44: segment = 7'b111_1110;       // O
             8'h4D: segment = 7'b110_0111;       // p
             8'h15: segment = 7'b111_0011;       // q
