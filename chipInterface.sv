@@ -41,5 +41,4 @@ module chipInterface
     assign HEX5 = 7'h7F;
 
 
-
 endmodule: chipInterface
