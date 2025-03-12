@@ -26,7 +26,7 @@ module ps2_tb;
 
     // Clock generation
     initial begin
-        clk = 0;
+        clk = 1'b0;
         forever #(SYSTEM_CLK_PERIOD / 2) clk = ~clk;
     end
 
@@ -84,6 +84,26 @@ module ps2_tb;
         // Idle state
         ps2_data = 1'b1; #(PS2_CLK_PERIOD);
         ps2_data = 1'b1; #(PS2_CLK_PERIOD);
+        ps2_data = 1'b1; #(PS2_CLK_PERIOD);
+
+        // Start bit
+        ps2_data = 1'b0;
+        #(PS2_CLK_PERIOD); // Wait for falling edge
+
+        // Data bits (LSB first)
+        ps2_data = 1'b0; #(PS2_CLK_PERIOD);
+        ps2_data = 1'b0; #(PS2_CLK_PERIOD);      
+        ps2_data = 1'b1; #(PS2_CLK_PERIOD);
+        ps2_data = 1'b1; #(PS2_CLK_PERIOD);
+        ps2_data = 1'b1; #(PS2_CLK_PERIOD);
+        ps2_data = 1'b0; #(PS2_CLK_PERIOD);
+        ps2_data = 1'b0; #(PS2_CLK_PERIOD);
+        ps2_data = 1'b0; #(PS2_CLK_PERIOD);
+
+        // Parity bit (odd parity)
+        ps2_data = 1'b1; #(PS2_CLK_PERIOD);
+
+        // Stop bit
         ps2_data = 1'b1; #(PS2_CLK_PERIOD);
 
         #1000000; // Wait a bit

@@ -1,17 +1,5 @@
 `default_nettype none
 
-/**
- * ps2.sv
- *
- * Enigma Machine
- *
- * ECE 18-500
- * Carnegie Mellon University
- *
- * This is 
- * 
- **/
-
 /*----------------------------------------------------------------------------*
  *  PS2 protocol                                                              *
  *----------------------------------------------------------------------------*/
@@ -23,10 +11,10 @@ module ps2
 
     logic [10:0]            shift_reg;
     logic [3:0]             counter;
-    // logic                   ps2_clk_sync;
     logic                   ps2_clk_neg_edge;
 
-    enum logic [1:0] {START, DATA, PARITY, STOP} state, nextState;
+    // FSM states
+    enum logic [2:0] {IDLE, START, DATA, PARITY, STOP} state, nextState;
 
     // Intermediate signals
     logic peripheral_clk_10khz_d1;
@@ -64,11 +52,10 @@ module ps2
     assign ps2_clk_neg_edge = falling_edge_sync2;
 
 
-
-    // state transition
+    // State transition
     always_ff @(posedge clk, negedge rst_l) begin
         if (~rst_l)
-            state <= START;         // start state
+            state <= IDLE;
         else if (ps2_clk_neg_edge)
             state <= nextState;
     end
@@ -77,48 +64,69 @@ module ps2
     // Next state logic
     always_comb begin
         unique case (state)
-            START:   nextState = (~ps2_data) ? DATA : START;                    // data is low --> START bit
-            DATA:    nextState = (counter == 4'd8) ? PARITY : DATA;             // 1 byte data sent
-            PARITY:  nextState = STOP;
-            STOP:    nextState = (ps2_clk_neg_edge && ps2_data) ? START : STOP; // data is high --> STOP bit
-            default: nextState = START;
+            IDLE:    nextState = (ps2_data) ? IDLE : START;
+            START:   nextState = DATA;                                  // Data is low --> START bit
+            DATA:    nextState = (counter == 4'd7) ? PARITY : DATA;     // 1 byte data sent
+            PARITY:  nextState = STOP;      
+            STOP:    nextState = (ps2_data) ? STOP : START;             // Data is high --> STOP bit
+            default: nextState = IDLE;
         endcase
     end
 
+
     // Output logic
     always_ff @(posedge clk) begin
-        // default outputs
-        shift_reg <= 11'b0;     // clear shift register
-        counter <= 4'b0;        // reset bit counter
-        key_rdy <= 1'b0;        // clear key ready flag
-        key_out <= 8'b0;        // clear key code
-
         unique case (state)
+            IDLE: begin
+                counter <= 4'b0;                        // Reset bit counter
+                shift_reg <= 11'b0;                     // Clear shift register
+                key_rdy <= 1'b0;                        // Clear key ready flag
+                key_out <= 8'b0;                        // Clear key code
+            end
             START: begin
-                counter <= 1'b0;
-                shift_reg <= 11'b0;
+                counter <= 4'b0;                        // Reset bit counter
+                shift_reg <= 11'b0;                     // Clear shift register
+                key_rdy <= 1'b0;                        // Clear key ready flag
+                key_out <= 8'b0;                        // Clear key code
             end
             DATA: begin
-                if (ps2_clk_neg_edge && (counter < 4'd8)) begin
+                if (ps2_clk_neg_edge && (counter < 4'd7)) begin
                     counter <= counter + 1'b1;
-                    shift_reg <= {ps2_data, shift_reg[10:1]};    // shift data in
+                    shift_reg <= {ps2_data, shift_reg[10:1]};           // Shift data in
                 end
+                else if (ps2_clk_neg_edge && (counter == 4'd7)) begin
+                    counter <= counter;
+                    shift_reg <= {ps2_data, shift_reg[10:1]};           // Shift data in
+                end
+                else begin
+                    counter <= counter;
+                    shift_reg <= shift_reg;
+                end
+                key_rdy <= 1'b0;
+                key_out <= 8'b0;
             end
             PARITY: begin
-                counter <= 1'b0;
-                if (ps2_clk_neg_edge)
-                    shift_reg <= {ps2_data, shift_reg[10:1]};   // shift data in
-            end
-            STOP: begin
+                counter <= 4'b0;
                 if (ps2_clk_neg_edge) begin
-                    shift_reg <= {ps2_data, shift_reg[10:1]};   // shift data in
-                    key_rdy <= 1'b1;                            // assert key code is ready
-                    key_out <= shift_reg[9:2];                  // final 8 bits
+                    shift_reg <= {ps2_data, shift_reg[10:1]};           // Shift data in
+                    key_out <= shift_reg[9:2];                          // Final 8 bits
+                    key_rdy <= 1'b1;                                    // Assert key code is ready
+                end 
+                else begin
+                    shift_reg <= shift_reg;
+                    key_rdy <= key_rdy;
+                    key_out <= key_out;
                 end
             end
-            default: begin
+            STOP: begin
+                counter <= 4'b0;
                 shift_reg <= shift_reg;
+                key_rdy <= key_rdy;
+                key_out <= key_out;
+            end
+            default: begin
                 counter <= counter;
+                shift_reg <= shift_reg;
                 key_rdy <= key_rdy;
                 key_out <= key_out;
             end

@@ -16,8 +16,7 @@
  *----------------------------------------------------------------------------*/
 
 module scanCodetoSevenSegment
-    (input  logic       key_rdy,
-     input  logic [7:0] scan_code,  
+    (input  logic [7:0] scan_code,  
      output logic [6:0] segment);
 
     always_comb begin
